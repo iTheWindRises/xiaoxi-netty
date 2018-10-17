@@ -106,20 +106,20 @@
             <scope>provided</scope>
         </dependency>
 
-        <!--&lt;!&ndash; 高性能分布式文件服务器 &ndash;&gt;-->
-        <!--<dependency>-->
-            <!--<groupId>com.github.tobato</groupId>-->
-            <!--<artifactId>fastdfs-client</artifactId>-->
-            <!--<version>1.26.2</version>-->
-        <!--</dependency>-->
+        <!-- 高性能分布式文件服务器 -->
+        <dependency>
+            <groupId>com.github.tobato</groupId>
+            <artifactId>fastdfs-client</artifactId>
+            <version>1.26.2</version>
+        </dependency>
 
 
-        <!--&lt;!&ndash; 二维码 &ndash;&gt;-->
-        <!--<dependency>-->
-            <!--<groupId>com.google.zxing</groupId>-->
-            <!--<artifactId>javase</artifactId>-->
-            <!--<version>3.3.3</version>-->
-        <!--</dependency>-->
+        <!-- 二维码 -->
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>javase</artifactId>
+            <version>3.3.3</version>
+        </dependency>
 
     </dependencies>
 
