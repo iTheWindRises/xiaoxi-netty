@@ -1,6 +1,10 @@
 package com.zwj.service;
 
 import com.zwj.pojo.User;
+import com.zwj.pojo.vo.FriendRequestVO;
+import com.zwj.pojo.vo.MyFriendsVO;
+
+import java.util.List;
 
 public interface UserService {
     /**
@@ -30,4 +34,41 @@ public interface UserService {
      * @param user
      */
     User updateUserInfo(User user);
+
+    /**
+     * 添加好友
+     * @param myUserId
+     * @param friendUsername
+     * @return
+     */
+    Integer preconditionSearchFriends(String myUserId,String friendUsername);
+
+    User queryUserByUsername(String username);
+
+    /**
+     * 添加好友请求记录
+     * @param myUserId
+     * @param friendUsername
+     */
+    void sendFriendRequest(String myUserId, String friendUsername);
+
+
+    List<FriendRequestVO> queryFriendRequestList(String acceptUserId);
+
+    void deleteFriendRequest(String acceptUserId,String sendUserId);
+
+    /**
+     * 通过好友请求
+     * @param acceptUserId
+     * @param sendUserId
+     */
+    void passFriendRequest(String acceptUserId,String sendUserId);
+
+    /**
+     * 查询好友列表
+     * @param userId
+     * @return
+     */
+    List<MyFriendsVO> queryMyFriends(String userId);
+
 }

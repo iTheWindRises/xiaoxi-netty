@@ -1,5 +1,7 @@
 package com.zwj.controller;
 
+import com.zwj.enums.OperatorFriendRequestTypeEnum;
+import com.zwj.enums.SearchFriendsStatusEnum;
 import com.zwj.pojo.User;
 import com.zwj.pojo.bo.UserBO;
 import com.zwj.pojo.vo.UserVO;
@@ -80,7 +82,7 @@ public class UserController {
         UserVO userVO = new UserVO();
         BeanUtils.copyProperties(userResult,userVO);
 
-        return JSONResult.ok(userResult);
+        return JSONResult.ok(userVO);
     }
 
     @PostMapping("/setNickName")
@@ -94,6 +96,129 @@ public class UserController {
         UserVO userVO = new UserVO();
         BeanUtils.copyProperties(userResult,userVO);
 
-        return JSONResult.ok(userResult);
+        return JSONResult.ok(userVO);
     }
+
+    /**
+     * 搜索好友,根据账号进行匹配查询,而不是模糊查询
+     * @param myUserId
+     * @param friendUsername
+     * @return
+     * @throws Exception
+     */
+    @PostMapping("/search")
+    public JSONResult searchUser(String myUserId,String friendUsername) throws Exception {
+
+        //1.判断myUserId,friendId不为空
+        if (StringUtils.isBlank(myUserId) || StringUtils.isBlank(friendUsername)) {
+            return JSONResult.errorMsg("");
+        }
+
+        //前置条件-1.搜索用户名如果不存在
+        //前置条件-2.搜索是自己
+        //前置条件-3.搜索已经是你的好友
+        Integer status = userService.preconditionSearchFriends(myUserId, friendUsername);
+        if (status== SearchFriendsStatusEnum.SUCCESS.status) {
+            User userResult = userService.queryUserByUsername(friendUsername);
+            UserVO userVO = new UserVO();
+            BeanUtils.copyProperties(userResult,userVO);
+
+            return JSONResult.ok(userVO);
+
+        }else {
+            String errorMsg = SearchFriendsStatusEnum.getMsgByKey(status);
+            return JSONResult.errorMsg(errorMsg);
+        }
+
+    }
+
+
+    @PostMapping("/addFriend")
+    public JSONResult addFriend(String myUserId,String friendUsername) throws Exception {
+
+        //1.判断myUserId,friendId不为空
+        if (StringUtils.isBlank(myUserId) || StringUtils.isBlank(friendUsername)) {
+            return JSONResult.errorMsg("");
+        }
+
+        //前置条件-1.搜索用户名如果不存在
+        //前置条件-2.搜索是自己
+        //前置条件-3.搜索已经是你的好友
+        Integer status = userService.preconditionSearchFriends(myUserId, friendUsername);
+        if (status== SearchFriendsStatusEnum.SUCCESS.status) {
+            userService.sendFriendRequest(myUserId,friendUsername);
+
+        }else {
+            String errorMsg = SearchFriendsStatusEnum.getMsgByKey(status);
+            return JSONResult.errorMsg(errorMsg);
+        }
+
+        return JSONResult.ok();
+
+    }
+
+    @PostMapping("/queryFriendRequests")
+    public JSONResult queryFriendRequests(String userId) throws Exception {
+
+        //1.判断myUserId,friendId不为空
+        if (StringUtils.isBlank(userId)) {
+            return JSONResult.errorMsg("");
+        }
+        //2.查询用户接受到的好友申请
+        return JSONResult.ok(userService.queryFriendRequestList(userId));
+
+    }
+
+    /**
+     * 接收方通过或者忽略好友请求
+     * @param acceptUserId
+     * @param sendUserId
+     * @param operType
+     * @return
+     * @throws Exception
+     */
+    @PostMapping("/operFriendRequest")
+    public JSONResult operFriendRequest(String acceptUserId,String sendUserId,Integer operType) throws Exception {
+
+        //1.判断myUserId,friendId不为空
+        if (StringUtils.isBlank(acceptUserId)||StringUtils.isBlank(sendUserId)|| operType==null) {
+            return JSONResult.errorMsg("");
+        }
+        //如果operType没有对应的枚举值,则直接抛出空错误信息
+        if (StringUtils.isBlank(OperatorFriendRequestTypeEnum.getMsgByType(operType))) {
+            return JSONResult.errorMsg("");
+        }
+
+        if (operType==OperatorFriendRequestTypeEnum.IGNORE.type) {
+            //2.如果是忽略好友请求,则直接删除好友请求的数据记录
+            userService.deleteFriendRequest(acceptUserId,sendUserId);
+        }else if (operType==OperatorFriendRequestTypeEnum.PASS.type) {
+            //3.如果是通过好友请求,则直接互相添加好友记录的数据记录
+            userService.passFriendRequest(acceptUserId,sendUserId);
+        }
+
+
+        return JSONResult.ok(userService.queryMyFriends(acceptUserId));
+    }
+
+    /**
+     * 查询我的好友列表
+     * @param userId
+     * @return
+     * @throws Exception
+     */
+    @PostMapping("/myFriends")
+    public JSONResult myFriends(String userId) throws Exception {
+
+        //1.判断userId不为空
+        if (StringUtils.isBlank(userId)) {
+            return JSONResult.errorMsg("");
+        }
+
+        //2.查询好友列表
+
+
+        return JSONResult.ok(userService.queryMyFriends(userId));
+    }
+
 }
