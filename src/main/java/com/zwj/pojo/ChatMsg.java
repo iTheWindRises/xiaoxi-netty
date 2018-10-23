@@ -9,7 +9,7 @@ import javax.persistence.*;
 @Data
 public class ChatMsg {
     @Id
-    private Integer id;
+    private String id;
 
     @Column(name = "send_user_id")
     private String sendUserId;
@@ -20,7 +20,7 @@ public class ChatMsg {
     private String msg;
 
     @Column(name = "sign_flag")
-    private String signFlag;
+    private Integer signFlag;
 
     @Column(name = "create_time")
     private Date createTime;

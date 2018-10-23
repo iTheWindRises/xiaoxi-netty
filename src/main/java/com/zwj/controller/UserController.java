@@ -2,6 +2,7 @@ package com.zwj.controller;
 
 import com.zwj.enums.OperatorFriendRequestTypeEnum;
 import com.zwj.enums.SearchFriendsStatusEnum;
+import com.zwj.pojo.ChatMsg;
 import com.zwj.pojo.User;
 import com.zwj.pojo.bo.UserBO;
 import com.zwj.pojo.vo.UserVO;
@@ -15,6 +16,8 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/u")
@@ -219,6 +222,26 @@ public class UserController {
 
 
         return JSONResult.ok(userService.queryMyFriends(userId));
+    }
+
+    /**
+     * 用户手机端获取未签收的消息列表
+     * @param acceptUserId
+     * @return
+     * @throws Exception
+     */
+    @PostMapping("/getUnReadMsgList")
+    public JSONResult getUnReadMsgList(String acceptUserId) throws Exception {
+
+        //1.判断userId不为空
+        if (StringUtils.isBlank(acceptUserId)) {
+            return JSONResult.errorMsg("");
+        }
+
+        //2.查询列表
+        List<ChatMsg> unReadMsgList = userService.getUnReadMsgList(acceptUserId);
+
+        return JSONResult.ok(unReadMsgList);
     }
 
 }

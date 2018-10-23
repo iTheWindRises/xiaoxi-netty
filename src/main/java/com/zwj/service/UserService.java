@@ -1,5 +1,6 @@
 package com.zwj.service;
 
+import com.zwj.netty.ChatMsg;
 import com.zwj.pojo.User;
 import com.zwj.pojo.vo.FriendRequestVO;
 import com.zwj.pojo.vo.MyFriendsVO;
@@ -71,4 +72,18 @@ public interface UserService {
      */
     List<MyFriendsVO> queryMyFriends(String userId);
 
+    /**
+     * 保存聊天消息到数据库
+     * @param chatMsg
+     * @return
+     */
+    String saveMsg(ChatMsg chatMsg);
+
+    /**
+     * 批量签收消息
+     * @param msgIdList
+     */
+    void updateMsgSigned (List<String> msgIdList);
+
+    List<com.zwj.pojo.ChatMsg> getUnReadMsgList(String acceptUserId);
 }

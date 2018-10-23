@@ -1,20 +1,21 @@
 package com.zwj.service.impl;
 
+import com.zwj.enums.MsgActionEnum;
+import com.zwj.enums.MsgSignFlagEnum;
 import com.zwj.enums.SearchFriendsStatusEnum;
-import com.zwj.mapper.FriendsRequestMapper;
-import com.zwj.mapper.MyFriendsMapper;
-import com.zwj.mapper.UserMapper;
-import com.zwj.mapper.UserMapperCustom;
+import com.zwj.mapper.*;
+import com.zwj.netty.ChatMsg;
+import com.zwj.netty.DataContent;
+import com.zwj.netty.UserChannelRel;
 import com.zwj.pojo.FriendsRequest;
 import com.zwj.pojo.MyFriends;
 import com.zwj.pojo.User;
 import com.zwj.pojo.vo.FriendRequestVO;
 import com.zwj.pojo.vo.MyFriendsVO;
 import com.zwj.service.UserService;
-import com.zwj.utils.FastDFSClient;
-import com.zwj.utils.FileUtils;
-import com.zwj.utils.MD5Utils;
-import com.zwj.utils.QRCodeUtils;
+import com.zwj.utils.*;
+import io.netty.channel.Channel;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import org.n3r.idworker.Sid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -37,7 +38,8 @@ public class UserServiceImpl implements UserService {
     private FriendsRequestMapper friendsRequestMapper;
     @Autowired
     private UserMapperCustom userMapperCustom;
-
+    @Autowired
+    private ChatMsgMapper chatMsgMapper;
     @Autowired
     private QRCodeUtils qrCodeUtils;
     @Autowired
@@ -185,6 +187,17 @@ public class UserServiceImpl implements UserService {
         saveFriends(sendUserId,acceptUserId);
 
         deleteFriendRequest(acceptUserId,sendUserId);
+
+
+        //使用websocket主动推送消息到请求发起者,更新他的通讯录为最新
+        Channel sendchannel = UserChannelRel.get(sendUserId);
+        if (sendchannel != null) {
+            DataContent dataContent = new DataContent();
+            dataContent.setAction(MsgActionEnum.PULL_FRIEND.type);
+
+            sendchannel.writeAndFlush(
+                    new TextWebSocketFrame(JsonUtils.objectToJson(dataContent)));
+        }
     }
 
     @Transactional(propagation = Propagation.SUPPORTS)
@@ -192,6 +205,39 @@ public class UserServiceImpl implements UserService {
     public List<MyFriendsVO> queryMyFriends(String userId) {
         List<MyFriendsVO> myFirends = userMapperCustom.queryMyFriends(userId);
         return myFirends;
+    }
+    @Transactional(propagation = Propagation.REQUIRED)
+    @Override
+    public String saveMsg(ChatMsg chatMsg) {
+
+        com.zwj.pojo.ChatMsg msgDB = new com.zwj.pojo.ChatMsg();
+        String msgId = Sid.nextShort();
+        msgDB.setId(msgId);
+        msgDB.setAcceptUserId(chatMsg.getReceiverId());
+        msgDB.setSendUserId(chatMsg.getSenderId());
+        msgDB.setCreateTime(new Date());
+        msgDB.setSignFlag(MsgSignFlagEnum.unsign.type);
+        msgDB.setMsg(chatMsg.getMsg());
+
+        chatMsgMapper.insert(msgDB);
+        return msgId;
+    }
+    @Transactional(propagation = Propagation.REQUIRED)
+    @Override
+    public void updateMsgSigned(List<String> msgIdList) {
+        userMapperCustom.batchUpdateMsgSigned(msgIdList);
+    }
+
+    @Transactional(propagation = Propagation.SUPPORTS)
+    @Override
+    public List<com.zwj.pojo.ChatMsg> getUnReadMsgList(String acceptUserId) {
+
+        Example example = new Example(com.zwj.pojo.ChatMsg.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andEqualTo("signFlag",0);
+        criteria.andEqualTo("acceptUserId",acceptUserId);
+        List<com.zwj.pojo.ChatMsg> result = chatMsgMapper.selectByExample(example);
+        return result;
     }
 
     private void saveFriends(String acceptUserId, String sendUserId) {

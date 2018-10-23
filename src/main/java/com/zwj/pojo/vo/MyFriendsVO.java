@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public  class MyFriendsVO {
-    private String friendUserid;
+    private String friendUserId;
 
     private String friendUsername;
 

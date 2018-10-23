@@ -7,6 +7,7 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
+import io.netty.handler.timeout.IdleStateHandler;
 
 public class WSServerInitialzer extends ChannelInitializer<SocketChannel> {
 
@@ -20,6 +21,15 @@ public class WSServerInitialzer extends ChannelInitializer<SocketChannel> {
         //对httpMessage进行聚合,聚合成FullHTTPRequest或FullHTTPResponse
         //几乎在netty中的编程,都会使用到此handler
         pipeline.addLast(new HttpObjectAggregator(1024*64));
+
+        //----------------以上是用于支持http协议-------------------//
+
+        //----------------添加心跳支持-------------------//
+        //针对客户端,如果在1分钟时没有想服务端发送读写心跳ALL,则主动断开
+        //如果是读空闲,或者写空闲不做处理
+        pipeline.addLast(new IdleStateHandler(60,60,90));
+        // 自定义的空闲状态检测
+        pipeline.addLast(new HeartBeatHandler());
 
         //----------------以上是用于支持http协议-------------------//
 
